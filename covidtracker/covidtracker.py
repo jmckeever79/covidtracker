@@ -52,3 +52,16 @@ class CovidTracker(object):
         if pct_change:
             diff = diff/startframe[stat]
         return diff
+
+    def getdeathspercase(self, date):
+        return self._getdeathspercase_helper(self.getdateframe(date))
+
+    def getdeathspercase_state(self, state):
+        return self._getdeathspercase_helper(self.getstateframe(state))
+
+    def getdeathspercase_county(self, state, county):
+        return self._getdeathspercase_helper(self.getcountyframe(state, county))
+
+    def _getdeathspercase_helper(self, df):
+        rate = (df['deaths']/df['cases']).rename('deaths per case')
+        return pd.concat([df, rate], axis=1, join='inner')
