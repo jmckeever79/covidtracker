@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import os
 from datetime import datetime
 
@@ -23,13 +24,18 @@ class CovidTracker(object):
             temp = temp.set_index(['state', 'county'])
         return temp
 
-    def getstateframe(self, state):
+    def getstateframe(self, state, group_counties=False):
         temp = self.df.loc[self.df['state']==state]
-        temp = temp.groupby(['date']).sum()
+        groups = ['date']
+        if (group_counties):
+            groups.append('county')
+        temp = temp.groupby(groups).sum()
         return temp
 
     def getcountyframe(self, state, county):
-        return self.df.loc[self.df['state']==state].loc[self.df['county']==county]
+        temp = self.df.loc[self.df['state']==state].loc[self.df['county']==county]
+        temp = temp.groupby(['date']).sum()
+        return temp
 
     def getcounties(self, state):
         sf = self.getstateframe(state)
@@ -65,3 +71,42 @@ class CovidTracker(object):
     def _getdeathspercase_helper(self, df):
         rate = (df['deaths']/df['cases']).rename('deaths per case')
         return pd.concat([df, rate], axis=1, join='inner')
+
+    def _getstateframe_helper(self, states, stat='cases'):
+        if (isinstance(states, str)):
+            states = [states]
+        result = None
+        for state in states:
+            state_frame = self.getstateframe(state)[stat].rename(state)
+            if (result is None):
+                result = state_frame
+            else:
+                result = pd.concat([result, state_frame], axis=1, join='inner')
+        return result
+
+    def plot_state(self, states, stat='cases'):
+        frame = self._getstateframe_helper(states, stat)
+        frame.plot()
+        plt.show()
+
+    def _getcountyframe_helper(self, counties, stat='cases'):
+        result = None
+        for t in counties:
+            state = t[0]
+            county = t[1]
+            name = '{0}, {1}'.format(county, state)
+            county_frame = self.getcountyframe(state, county)
+            if (county_frame.empty):
+                continue
+            county_frame = county_frame[stat].rename(name)
+            if (result is None):
+                result = county_frame
+            else:
+                result = pd.concat([result, county_frame], axis=1, join='inner')
+        return result
+
+    def plot_county(self, counties, stat='cases'):
+        frame = self._getcountyframe_helper(counties, stat)
+        frame.plot()
+        plt.show()
+
