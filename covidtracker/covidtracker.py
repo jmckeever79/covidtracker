@@ -44,7 +44,7 @@ class CovidTracker(object):
     def _set_index(self, frame):
         return frame.set_index(['state', 'county'])
 
-    def getperioddifference(self, enddate, days=1, stat='cases', pct_change=False):
+    def getperiodchange(self, enddate, days=1, stat='cases', pct_change=False):
         endframe = self.getdateframe(enddate, indexed=False)
         ts = pd.Timestamp(enddate)
         offset = '1 day' if days==1 else '{0} days'.format(days)
@@ -59,12 +59,24 @@ class CovidTracker(object):
             diff = diff/startframe[stat]
         return diff
 
+    def getdiffseries_date(self, stat='cases'):
+        by_date = self.df.groupby(['date']).sum()[stat]
+        return by_date.diff()
+
+    def getdiffseries_state(self, state, stat='cases'):
+        sf = self.getstateframe(state)[stat]
+        return sf.diff()
+
+    def diffseries_county(self, state, county, stat='cases'):
+        cf = self.getcountyframe(state, county)[stat]
+        return cf.diff()
+
     def getdeathspercase(self, date):
         return self._getdeathspercase_helper(self.getdateframe(date))
 
     def getdeathspercase_state(self, state):
         return self._getdeathspercase_helper(self.getstateframe(state))
-
+    
     def getdeathspercase_county(self, state, county):
         return self._getdeathspercase_helper(self.getcountyframe(state, county))
 
