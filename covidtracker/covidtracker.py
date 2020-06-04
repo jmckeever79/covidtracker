@@ -59,7 +59,7 @@ class CovidTracker(object):
             diff = diff/startframe[stat]
         return diff
 
-    def getdiffseries_date(self, stat='cases'):
+    def getdiffseries(self, stat='cases'):
         by_date = self.df.groupby(['date']).sum()[stat]
         return by_date.diff()
 
@@ -67,7 +67,7 @@ class CovidTracker(object):
         sf = self.getstateframe(state)[stat]
         return sf.diff()
 
-    def diffseries_county(self, state, county, stat='cases'):
+    def getdiffseries_county(self, state, county, stat='cases'):
         cf = self.getcountyframe(state, county)[stat]
         return cf.diff()
 
@@ -122,3 +122,49 @@ class CovidTracker(object):
         frame.plot()
         plt.show()
 
+    def plotdiffseries(self, startdate=None, enddate=None, stat='cases'):
+        df = self.getdiffseries(stat=stat).loc[startdate:enddate]
+        self._plotbarseries(df)
+
+    def plotdiffseries_state(self, state, startdate=None, enddate=None, stat='cases'):
+        df_state = self.getdiffseries_state(state, stat=stat).loc[startdate:enddate]
+        self._plotbarseries(df_state)
+
+    def plotdiffseries_county(self, state, county, startdate=None, enddate=None, stat='cases'):
+        df_county = self.getdiffseries_county(state, county, stat=stat).loc[startdate:enddate]
+        self._plotbarseries(df_county)
+
+    def _plotbarseries(self, series):
+        ax = plt.subplot('111')
+        b1 = ax.bar(series.index, series.values)
+        xlabels = series.index[::int(len(series.index)/4)]
+        plt.xticks(xlabels, xlabels)
+        plt.show()
+
+    def plotdiffseriescompare_state(self, state1, state2, startdate=None, enddate=None, stat='cases'):
+        df1 = self.getdiffseries_state(state1, stat=stat).rename(state1).loc[startdate:enddate]
+        df2 = self.getdiffseries_state(state2, stat=stat).rename(state2)
+        joined = pd.concat([df1, df2], axis=1, join='inner')
+        self._plotdiffseriescompare(joined)
+
+    def plotdiffseriescompare_county(self, state1, county1, state2, county2, 
+                                     startdate=None, enddate=None, stat='cases'):
+        df1 = self.getdiffseries_county(state1, county1, stat=stat).rename(county1).loc[startdate:enddate]
+        df2 = self.getdiffseries_county(state2, county2, stat=stat).rename(county2)
+        joined = pd.concat([df1, df2], axis=1, join='inner')
+        self._plotdiffseriescompare(joined)
+     
+    def _plotdiffseriescompare(self, df):
+        ax = plt.subplot('111')
+        if (df.columns.size != 2):
+            raise Exception('Difference series comparison requires 2 columns')
+        col0 = df.columns[0]
+        col1 = df.columns[1]
+        b1 = ax.bar(df.index, df[col0], align='edge', width=0.4, color='orange')
+        b1.set_label(col0)
+        b2 = ax.bar(df.index, df[col1], align='edge', width=-0.4, color='blue')
+        b2.set_label(col1)
+        ax.legend()
+        xlabels = df.index[::int(len(df.index)/4)]
+        plt.xticks(xlabels, xlabels)
+        plt.show()
