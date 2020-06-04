@@ -9,6 +9,9 @@ class CovidTracker(object):
     uscountyfile = os.path.join(repos, 'us-counties.csv')
     mostrecentdate = None
 
+    def help(self):
+        print('Figure it out for yourself, ass.')
+
     def load_counties(self):
         self.df = pd.read_csv(self.uscountyfile)
         self.df = self.df.drop('fips', axis=1)
