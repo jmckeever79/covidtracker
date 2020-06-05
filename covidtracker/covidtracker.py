@@ -99,8 +99,8 @@ class CovidTracker(object):
                 result = pd.concat([result, state_frame], axis=1, join='inner')
         return result
 
-    def plot_state(self, states, stat='cases'):
-        frame = self._getstateframe_helper(states, stat)
+    def plotstate(self, states, startdate=None, enddate=None, stat='cases'):
+        frame = self._getstateframe_helper(states, stat).loc[startdate:enddate]
         frame.plot()
         plt.show()
 
